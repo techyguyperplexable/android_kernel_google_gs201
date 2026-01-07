@@ -58,37 +58,28 @@ tg_update()
 	tg_edit "<b>🔨 Build In Progress</b>%0A%0A<b>Device:</b> <code>${DEVICE}</code>%0A<b>Kernel:</b> <code>${KERNEL_VERSION}</code>%0A<b>Date:</b> <code>${DATE}</code>%0A%0A<b>Status:</b> <code>${status}</code>"
 }
 
-download_clang()
+download_toolchain()
 {
-	tg_update "Downloading AOSP Clang..."
-	echo "Downloading latest AOSP Clang..."
+	tg_update "Downloading GCC 14.2.0 toolchain..."
+	echo "Downloading GCC 14.2.0 toolchain..."
 	mkdir -p "${KERNEL_DIR}/toolchain"
 	cd "${KERNEL_DIR}/toolchain"
 
-	CLANG_VER="clang-r522817"
-	CLANG_URL="https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/${CLANG_VER}.tar.gz"
-
-	if [ ! -d "${CLANG_VER}" ]; then
-		echo "Downloading ${CLANG_VER}..."
-		mkdir -p "${CLANG_VER}"
-		curl -LSs "$CLANG_URL" | tar -xz -C "${CLANG_VER}"
+	if [ ! -d "gcc-14.2.0-nolibc/aarch64-linux" ]; then
+		echo "Downloading GCC 14.2.0..."
+		wget -q https://www.kernel.org/pub/tools/crosstool/files/bin/x86_64/14.2.0/x86_64-gcc-14.2.0-nolibc-aarch64-linux.tar.gz -O gcc.tar.gz
+		gunzip gcc.tar.gz
+		tar -xf gcc.tar
+		rm -f gcc.tar
 	fi
 
 	cd "${KERNEL_DIR}"
 
-	export PATH="${KERNEL_DIR}/toolchain/${CLANG_VER}/bin:$PATH"
-	export CLANG_TRIPLE=aarch64-linux-gnu-
-	export CROSS_COMPILE=aarch64-linux-gnu-
-	export CC=clang
-	export LD=ld.lld
-	export AR=llvm-ar
-	export NM=llvm-nm
-	export OBJCOPY=llvm-objcopy
-	export OBJDUMP=llvm-objdump
-	export STRIP=llvm-strip
+	export PATH="${KERNEL_DIR}/toolchain/gcc-14.2.0-nolibc/aarch64-linux/bin:$PATH"
+	export CROSS_COMPILE=aarch64-linux-
 
-	echo "Clang version: $(clang --version | head -1)"
-	tg_update "Clang ready ✓"
+	echo "GCC version: $(aarch64-linux-gcc --version | head -1)"
+	tg_update "GCC ready ✓"
 }
 
 get_changelog()
@@ -105,20 +96,45 @@ build_kernel()
 	rm -rf "$OUT_DIR"
 	mkdir -p "$OUT_DIR"
 
+	export KBUILD_BUILD_USER="zen"
+	export KBUILD_BUILD_HOST="Github"
+
+	GCC_PATH="${KERNEL_DIR}/toolchain/gcc-14.2.0-nolibc/aarch64-linux/bin/aarch64-linux-"
+	BUILD_LOG="${KERNEL_DIR}/build.log"
+
 	tg_update "Generating defconfig..."
-	make O="$OUT_DIR" ARCH=arm64 LLVM=1 LLVM_IAS=1 "$DEFCONFIG"
+	make CROSS_COMPILE=${GCC_PATH} CC=${GCC_PATH}gcc ARCH=arm64 "$DEFCONFIG" -j$(nproc) 2>&1 | tee -a "$BUILD_LOG" | tail -5
 
 	tg_update "Compiling kernel..."
-	make O="$OUT_DIR" ARCH=arm64 LLVM=1 LLVM_IAS=1 -j$(nproc)
-
-	if [ -f "${OUT_DIR}/arch/arm64/boot/Image" ]; then
-		echo "Kernel built successfully!"
-		tg_update "Kernel compiled ✓"
+	if make CROSS_COMPILE=${GCC_PATH} CC=${GCC_PATH}gcc ARCH=arm64 -j$(nproc) 2>&1 | tee -a "$BUILD_LOG"; then
+		if [ -f "arch/arm64/boot/Image.lz4" ]; then
+			echo "Kernel built successfully!"
+			tg_update "Kernel compiled ✓"
+		elif [ -f "arch/arm64/boot/Image" ]; then
+			echo "Compressing Image to Image.lz4..."
+			lz4 -f "arch/arm64/boot/Image" "arch/arm64/boot/Image.lz4"
+			tg_update "Kernel compiled ✓"
+		else
+			tg_update "❌ Build failed! No Image found"
+			send_build_error "No kernel image produced"
+			exit 1
+		fi
 	else
 		tg_update "❌ Build failed!"
-		echo "Kernel build failed!"
+		send_build_error "Compilation error"
 		exit 1
 	fi
+}
+
+send_build_error()
+{
+	local reason="$1"
+	local error_log=$(tail -50 "${KERNEL_DIR}/build.log" 2>/dev/null || echo "No log available")
+
+	curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
+		-d chat_id="${TELEGRAM_CHAT_ID}" \
+		-d text="<b>❌ Build Failed</b>%0A%0A<b>Reason:</b> <code>${reason}</code>%0A%0A<b>Last 50 lines:</b>%0A<pre>${error_log}</pre>" \
+		-d parse_mode="HTML"
 }
 
 make_zip()
@@ -129,8 +145,11 @@ make_zip()
 	cd "$ANYKERNEL_DIR"
 	git clean -fdx
 
-	if [ -f "${OUT_DIR}/arch/arm64/boot/Image.lz4" ]; then
-		cp "${OUT_DIR}/arch/arm64/boot/Image.lz4" ./Image.lz4
+	if [ -f "${KERNEL_DIR}/out/arch/arm64/boot/Image.lz4" ]; then
+		cp "${KERNEL_DIR}/out/arch/arm64/boot/Image.lz4" ./Image.lz4
+		echo "Copied Image.lz4"
+	elif [ -f "${KERNEL_DIR}/arch/arm64/boot/Image.lz4" ]; then
+		cp "${KERNEL_DIR}/arch/arm64/boot/Image.lz4" ./Image.lz4
 		echo "Copied Image.lz4"
 	else
 		echo "Image.lz4 not found!"
@@ -138,8 +157,9 @@ make_zip()
 	fi
 
 	echo "Concatenating DTB files..."
-	cat ${OUT_DIR}/google-devices/gs201/dts/*.dtb > ./dtb
-	echo "Created dtb"
+	cat ${KERNEL_DIR}/out/google-devices/gs201/dts/*.dtb > ./dtb 2>/dev/null || \
+	cat ${KERNEL_DIR}/google-devices/gs201/dts/*.dtb > ./dtb 2>/dev/null || \
+	echo "Warning: No DTB files found"
 
 	zip -r9 "${KERNEL_DIR}/${ZIP_NAME}" ./*
 
@@ -189,7 +209,7 @@ case "$1" in
 		;;
 	*)
 		tg_start
-		download_clang
+		download_toolchain
 		build_kernel
 		make_zip
 		send_telegram
