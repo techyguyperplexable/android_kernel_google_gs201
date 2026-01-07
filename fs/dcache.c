@@ -70,8 +70,10 @@
  *
  * If no ancestor relationship:
  * arbitrary, since it's serialized on rename_lock
+ *
+ * Reduced from 100 to 50 to keep dentries/inodes in cache longer.
  */
-int sysctl_vfs_cache_pressure __read_mostly = 100;
+int sysctl_vfs_cache_pressure __read_mostly = 50;
 EXPORT_SYMBOL_GPL(sysctl_vfs_cache_pressure);
 
 __cacheline_aligned_in_smp DEFINE_SEQLOCK(rename_lock);
