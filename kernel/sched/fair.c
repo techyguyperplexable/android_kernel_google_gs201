@@ -119,8 +119,9 @@ static unsigned int sched_nr_latency = 8;
 /*
  * After fork, child runs first. If set to 0 (default) then
  * parent will (try to) run first.
+ * Set to 1 for mobile to reduce fork latency.
  */
-unsigned int sysctl_sched_child_runs_first __read_mostly;
+unsigned int sysctl_sched_child_runs_first __read_mostly = 1;
 
 /*
  * SCHED_OTHER wake-up granularity.
