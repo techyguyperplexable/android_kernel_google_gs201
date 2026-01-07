@@ -1261,7 +1261,7 @@ static inline bool folio_trylock_flag(struct folio *folio, int bit_nr,
 }
 
 /* How many times do we accept lock stealing from under a waiter? */
-int sysctl_page_lock_unfairness = 5;
+int sysctl_page_lock_unfairness = 3;
 
 static inline int folio_wait_bit_common(struct folio *folio, int bit_nr,
 		int state, enum behavior behavior)
