@@ -477,9 +477,9 @@ enum dhd_op_flags {
 #define MAX_CNTL_RX_TIMEOUT 1
 #endif /* MAX_CNTL_RX_TIMEOUT */
 
-#define DHD_SCAN_ASSOC_ACTIVE_TIME	40 /* ms: Embedded default Active setting from DHD */
+#define DHD_SCAN_ASSOC_ACTIVE_TIME	30 /* ms: Embedded default Active setting from DHD */
 #ifndef CUSTOM_SCAN_UNASSOC_ACTIVE_TIME
-#define DHD_SCAN_UNASSOC_ACTIVE_TIME	80 /* ms: Embedded def. Unassoc Active setting from DHD */
+#define DHD_SCAN_UNASSOC_ACTIVE_TIME	60 /* ms: Embedded def. Unassoc Active setting from DHD */
 #else
 #define DHD_SCAN_UNASSOC_ACTIVE_TIME	CUSTOM_SCAN_UNASSOC_ACTIVE_TIME
 #endif /* CUSTOM_SCAN_UNASSOC_ACTIVE_TIME */
@@ -490,7 +490,7 @@ enum dhd_op_flags {
 #define DHD_SCAN_HOME_AWAY_TIME CUSTOM_SCAN_HOME_AWAY_TIME /* ms: Custom setting from DHD */
 #endif /* CUSTOM_SCAN_HOME_AWAY_TIME */
 #ifndef CUSTOM_SCAN_PASSIVE_TIME
-#define DHD_SCAN_PASSIVE_TIME		130 /* ms: Embedded default Passive setting from DHD */
+#define DHD_SCAN_PASSIVE_TIME		110 /* ms: Embedded default Passive setting from DHD */
 #else
 #define DHD_SCAN_PASSIVE_TIME	CUSTOM_SCAN_PASSIVE_TIME /* ms: Custom Passive setting from DHD */
 #endif /* CUSTOM_SCAN_PASSIVE_TIME */
@@ -3084,9 +3084,9 @@ extern uint dhd_force_tx_queueing;
 #ifndef CUSTOM_GLOM_SETTING
 #define CUSTOM_GLOM_SETTING 	DEFAULT_GLOM_VALUE
 #endif
-#define WL_AUTO_ROAM_TRIGGER -75
+#define WL_AUTO_ROAM_TRIGGER -70
 /* hooks for custom Roaming Trigger  setting via Makefile */
-#define DEFAULT_ROAM_TRIGGER_VALUE -75 /* dBm default roam trigger all band */
+#define DEFAULT_ROAM_TRIGGER_VALUE -70 /* dBm default roam trigger all band */
 #define DEFAULT_ROAM_TRIGGER_SETTING 	-1
 #ifndef CUSTOM_ROAM_TRIGGER_SETTING
 #define CUSTOM_ROAM_TRIGGER_SETTING 	DEFAULT_ROAM_TRIGGER_VALUE
