@@ -174,3 +174,8 @@ all_kmi_symbols
 
 # Object directory
 out/
+
+# Build artifacts
+Sultan-KernelSU-SUSFS-gs201-20260108-0257.zip
+build.log
+toolchain/
