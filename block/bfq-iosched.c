@@ -178,7 +178,7 @@ static u64 bfq_slice_idle = NSEC_PER_SEC / 125;
 static const int bfq_stats_min_budgets = 194;
 
 /* Default maximum budget values, in sectors and number of requests. */
-static const int bfq_default_max_budget = 16 * 1024;
+static const int bfq_default_max_budget = 32 * 1024;
 
 /*
  * When a sync request is dispatched, the queue that contains that
