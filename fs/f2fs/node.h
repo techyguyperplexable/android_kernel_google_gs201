@@ -18,7 +18,7 @@
 /* size of free nid batch when shrinking */
 #define SHRINK_NID_BATCH_SIZE	8
 
-#define DEF_RA_NID_PAGES	0	/* # of nid pages to be readaheaded */
+#define DEF_RA_NID_PAGES	4	/* # of nid pages to be readaheaded */
 
 /* maximum readahead size for node during getting data blocks */
 #define MAX_RA_NODE		128
