@@ -25,16 +25,18 @@ download_clang()
 	mkdir -p "${KERNEL_DIR}/toolchain"
 	cd "${KERNEL_DIR}/toolchain"
 
-	CLANG_URL="https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/clang-r530567.tar.gz"
+	CLANG_VER="clang-r522817"
+	CLANG_URL="https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/${CLANG_VER}.tar.gz"
 
-	if [ ! -d "clang" ]; then
-		mkdir -p clang
-		curl -LSs "$CLANG_URL" | tar -xz -C clang
+	if [ ! -d "${CLANG_VER}" ]; then
+		echo "Downloading ${CLANG_VER}..."
+		mkdir -p "${CLANG_VER}"
+		curl -LSs "$CLANG_URL" | tar -xz -C "${CLANG_VER}"
 	fi
 
 	cd "${KERNEL_DIR}"
 
-	export PATH="${KERNEL_DIR}/toolchain/clang/bin:$PATH"
+	export PATH="${KERNEL_DIR}/toolchain/${CLANG_VER}/bin:$PATH"
 	export CLANG_TRIPLE=aarch64-linux-gnu-
 	export CROSS_COMPILE=aarch64-linux-gnu-
 	export CC=clang
@@ -44,6 +46,8 @@ download_clang()
 	export OBJCOPY=llvm-objcopy
 	export OBJDUMP=llvm-objdump
 	export STRIP=llvm-strip
+
+	echo "Clang version: $(clang --version | head -1)"
 }
 
 get_changelog()
