@@ -18,9 +18,49 @@ export SUBARCH=arm64
 
 TELEGRAM_TOKEN="${TG_BOT_TOKEN:-8585670877:AAGFjf6V8GN5ERfAjspsnQqH-a3Jh4xyCWg}"
 TELEGRAM_CHAT_ID="${TG_CHAT_ID:-7721220680}"
+MSG_ID=""
+
+tg_send()
+{
+	local message="$1"
+	curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
+		-d chat_id="${TELEGRAM_CHAT_ID}" \
+		-d text="${message}" \
+		-d parse_mode="HTML" \
+		-d disable_web_page_preview="true"
+}
+
+tg_edit()
+{
+	local message="$1"
+	curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/editMessageText" \
+		-d chat_id="${TELEGRAM_CHAT_ID}" \
+		-d message_id="${MSG_ID}" \
+		-d text="${message}" \
+		-d parse_mode="HTML" \
+		-d disable_web_page_preview="true"
+}
+
+tg_start()
+{
+	local response
+	response=$(curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
+		-d chat_id="${TELEGRAM_CHAT_ID}" \
+		-d text="<b>🔨 Build Started</b>%0A%0A<b>Device:</b> <code>${DEVICE}</code>%0A<b>Kernel:</b> <code>${KERNEL_VERSION}</code>%0A<b>Date:</b> <code>${DATE}</code>%0A%0A<b>Status:</b> <code>Initializing...</code>" \
+		-d parse_mode="HTML")
+	MSG_ID=$(echo "$response" | grep -o '"message_id":[0-9]*' | cut -d: -f2)
+	echo "Build message ID: $MSG_ID"
+}
+
+tg_update()
+{
+	local status="$1"
+	tg_edit "<b>🔨 Build In Progress</b>%0A%0A<b>Device:</b> <code>${DEVICE}</code>%0A<b>Kernel:</b> <code>${KERNEL_VERSION}</code>%0A<b>Date:</b> <code>${DATE}</code>%0A%0A<b>Status:</b> <code>${status}</code>"
+}
 
 download_clang()
 {
+	tg_update "Downloading AOSP Clang..."
 	echo "Downloading latest AOSP Clang..."
 	mkdir -p "${KERNEL_DIR}/toolchain"
 	cd "${KERNEL_DIR}/toolchain"
@@ -48,29 +88,34 @@ download_clang()
 	export STRIP=llvm-strip
 
 	echo "Clang version: $(clang --version | head -1)"
+	tg_update "Clang ready ✓"
 }
 
 get_changelog()
 {
-	echo "Getting commit changelog..."
 	LAST_COMMITS=$(git log --oneline -10 --no-merges)
 	echo "$LAST_COMMITS"
 }
 
 build_kernel()
 {
+	tg_update "Building kernel..."
 	echo "Building kernel..."
 
 	rm -rf "$OUT_DIR"
 	mkdir -p "$OUT_DIR"
 
+	tg_update "Generating defconfig..."
 	make O="$OUT_DIR" ARCH=arm64 LLVM=1 LLVM_IAS=1 "$DEFCONFIG"
 
+	tg_update "Compiling kernel..."
 	make O="$OUT_DIR" ARCH=arm64 LLVM=1 LLVM_IAS=1 -j$(nproc)
 
 	if [ -f "${OUT_DIR}/arch/arm64/boot/Image" ]; then
 		echo "Kernel built successfully!"
+		tg_update "Kernel compiled ✓"
 	else
+		tg_update "❌ Build failed!"
 		echo "Kernel build failed!"
 		exit 1
 	fi
@@ -78,6 +123,7 @@ build_kernel()
 
 make_zip()
 {
+	tg_update "Creating flashable zip..."
 	echo "Creating flashable zip..."
 
 	cd "$ANYKERNEL_DIR"
@@ -99,20 +145,18 @@ make_zip()
 
 	cd "$KERNEL_DIR"
 	echo "Zip created: ${ZIP_NAME}"
+	tg_update "Zip created ✓"
 }
 
 send_telegram()
 {
-	if [ -z "$TELEGRAM_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
-		echo "Telegram credentials not set, skipping upload"
-		return
-	fi
-
+	tg_update "Uploading to Telegram..."
 	echo "Sending to Telegram..."
 
 	CHANGELOG=$(get_changelog)
 
-	MESSAGE="<b>🔥 ${KERNEL_NAME} Build</b>
+	MESSAGE="<b>✅ ${KERNEL_NAME} Build Complete</b>
+
 <b>Device:</b> <code>${DEVICE}</code>
 <b>Kernel:</b> <code>${KERNEL_VERSION}</code>
 <b>Date:</b> <code>${DATE}</code>
@@ -144,6 +188,7 @@ case "$1" in
 		get_changelog
 		;;
 	*)
+		tg_start
 		download_clang
 		build_kernel
 		make_zip
