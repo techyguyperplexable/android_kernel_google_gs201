@@ -82,28 +82,16 @@ make_zip()
 	if [ -f "${OUT_DIR}/arch/arm64/boot/Image.lz4" ]; then
 		cp "${OUT_DIR}/arch/arm64/boot/Image.lz4" ./Image.lz4
 		echo "Copied Image.lz4"
-	elif [ -f "${OUT_DIR}/arch/arm64/boot/Image" ]; then
-		cp "${OUT_DIR}/arch/arm64/boot/Image" ./Image
-		echo "Copied Image"
 	else
-		echo "No kernel image found!"
+		echo "Image.lz4 not found!"
 		exit 1
 	fi
 
-	if [ -f "${OUT_DIR}/arch/arm64/boot/dtb.img" ]; then
-		cp "${OUT_DIR}/arch/arm64/boot/dtb.img" ./dtb
-		echo "Copied dtb.img"
-	elif [ -f "${OUT_DIR}/arch/arm64/boot/dts/google/dtb.img" ]; then
-		cp "${OUT_DIR}/arch/arm64/boot/dts/google/dtb.img" ./dtb
-		echo "Copied dtb.img from dts/google"
-	fi
+	echo "Concatenating DTB files..."
+	cat ${OUT_DIR}/google-devices/gs201/dts/*.dtb > ./dtb
+	echo "Created dtb"
 
-	if [ -f "${OUT_DIR}/arch/arm64/boot/dtbo.img" ]; then
-		cp "${OUT_DIR}/arch/arm64/boot/dtbo.img" ./dtbo.img
-		echo "Copied dtbo.img"
-	fi
-
-	zip -r9 "${KERNEL_DIR}/${ZIP_NAME}" * -x .git README.md *placeholder
+	zip -r9 "${KERNEL_DIR}/${ZIP_NAME}" ./*
 
 	cd "$KERNEL_DIR"
 	echo "Zip created: ${ZIP_NAME}"
