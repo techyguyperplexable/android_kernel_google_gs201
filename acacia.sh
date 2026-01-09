@@ -140,7 +140,13 @@ BUILD_STATUS=${PIPESTATUS[0]}
 if [ $BUILD_STATUS -eq 0 ]; then
     tg_stop_monitor
     
-    if [ -f "arch/arm64/boot/Image.lz4" ]; then
+    # Check both out/ and non-out paths
+    if [ -f "out/arch/arm64/boot/Image.lz4" ]; then
+        info "Kernel Image.lz4 built successfully!"
+    elif [ -f "out/arch/arm64/boot/Image" ]; then
+        info "Compressing Image to Image.lz4..."
+        lz4 -f "out/arch/arm64/boot/Image" "out/arch/arm64/boot/Image.lz4"
+    elif [ -f "arch/arm64/boot/Image.lz4" ]; then
         info "Kernel Image.lz4 built successfully!"
     elif [ -f "arch/arm64/boot/Image" ]; then
         info "Compressing Image to Image.lz4..."
@@ -166,35 +172,43 @@ if [ ! -d "$ANYKERNEL_DIR" ]; then
     exit 1
 fi
 
-# Check if Image is freshly built (within last 5 minutes)
-IMAGE_FILE="$KERNEL_ROOT/arch/arm64/boot/Image.lz4"
-[ ! -f "$IMAGE_FILE" ] && IMAGE_FILE="$KERNEL_ROOT/arch/arm64/boot/Image"
-
-if [ -f "$IMAGE_FILE" ]; then
-    IMAGE_AGE=$(( $(date +%s) - $(stat -c %Y "$IMAGE_FILE") ))
-    if [ $IMAGE_AGE -gt 600 ]; then
-        echo "Error: Image is stale (${IMAGE_AGE}s old). Build may have failed."
-        exit 1
-    fi
+# Find Image location (check out/ first, then root)
+if [ -f "$KERNEL_ROOT/out/arch/arm64/boot/Image.lz4" ]; then
+    IMAGE_FILE="$KERNEL_ROOT/out/arch/arm64/boot/Image.lz4"
+elif [ -f "$KERNEL_ROOT/out/arch/arm64/boot/Image" ]; then
+    IMAGE_FILE="$KERNEL_ROOT/out/arch/arm64/boot/Image"
+elif [ -f "$KERNEL_ROOT/arch/arm64/boot/Image.lz4" ]; then
+    IMAGE_FILE="$KERNEL_ROOT/arch/arm64/boot/Image.lz4"
+elif [ -f "$KERNEL_ROOT/arch/arm64/boot/Image" ]; then
+    IMAGE_FILE="$KERNEL_ROOT/arch/arm64/boot/Image"
 else
     echo "Error: No kernel image found!"
+    exit 1
+fi
+
+# Check if Image is freshly built (within last 10 minutes)
+IMAGE_AGE=$(( $(date +%s) - $(stat -c %Y "$IMAGE_FILE") ))
+if [ $IMAGE_AGE -gt 600 ]; then
+    echo "Error: Image is stale (${IMAGE_AGE}s old). Build may have failed."
     exit 1
 fi
 
 cd "$ANYKERNEL_DIR"
 rm -f Image* dtb *.zip 2>/dev/null
 
-# Copy kernel image
-if [ -f "$KERNEL_ROOT/arch/arm64/boot/Image.lz4" ]; then
-    cp "$KERNEL_ROOT/arch/arm64/boot/Image.lz4" ./Image.lz4
+# Copy kernel image (compress if needed)
+if [[ "$IMAGE_FILE" == *.lz4 ]]; then
+    cp "$IMAGE_FILE" ./Image.lz4
 else
-    echo "Error: Image.lz4 not found."
-    exit 1
+    info "Compressing Image to Image.lz4..."
+    lz4 -f "$IMAGE_FILE" ./Image.lz4
 fi
 
-# Copy DTB files
-if [ -d "$KERNEL_ROOT/google-devices/$DEVICE/dts" ]; then
-    cat "$KERNEL_ROOT/google-devices/$DEVICE/dts"/*.dtb > ./dtb 2>/dev/null || echo "Warning: No DTB files found"
+# Copy DTB files (check both out/ and root paths)
+DTB_DIR="$KERNEL_ROOT/out/google-devices/$DEVICE/dts"
+[ ! -d "$DTB_DIR" ] && DTB_DIR="$KERNEL_ROOT/google-devices/$DEVICE/dts"
+if [ -d "$DTB_DIR" ]; then
+    cat "$DTB_DIR"/*.dtb > ./dtb 2>/dev/null || echo "Warning: No DTB files found"
 fi
 
 SHORT_SHA=$(git -C "$KERNEL_ROOT" rev-parse --short HEAD)
