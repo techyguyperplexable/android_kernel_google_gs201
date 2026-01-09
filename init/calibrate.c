@@ -181,8 +181,10 @@ static unsigned long calibrate_delay_direct(void)
  * calculated based on the timer frequency.
  * For the rest of the CPUs we cannot assume that the timer frequency is same as
  * the cpu frequency, hence do the calibration for those.
+ *
+ * Acacia: Reduced precision for faster boot - 4 bits instead of 8
  */
-#define LPS_PREC 8
+#define LPS_PREC 4
 
 static unsigned long calibrate_delay_converge(void)
 {
