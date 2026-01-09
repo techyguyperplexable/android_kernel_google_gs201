@@ -252,4 +252,6 @@ extern int atomic_dec_and_mutex_lock(atomic_t *cnt, struct mutex *lock);
 DEFINE_GUARD(mutex, struct mutex *, mutex_lock(_T), mutex_unlock(_T))
 DEFINE_FREE(mutex, struct mutex *, if (_T) mutex_unlock(_T))
 
+extern unsigned long mutex_get_owner(struct mutex *lock);
+
 #endif /* __LINUX_MUTEX_H */
