@@ -10135,6 +10135,8 @@ void __init sched_init(void)
 #endif
 	init_sched_fair_class();
 
+	pr_info("EEVDF scheduler enabled\n");
+
 	psi_init();
 
 	init_uclamp();
