@@ -1306,7 +1306,6 @@ int __init_or_module do_one_initcall(initcall_t fn)
 	}
 	WARN(msgbuf[0], "initcall %pS returned with %s\n", fn, msgbuf);
 
-	add_latent_entropy();
 	return ret;
 }
 
