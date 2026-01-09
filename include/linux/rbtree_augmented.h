@@ -60,6 +60,37 @@ rb_insert_augmented_cached(struct rb_node *node,
 	rb_insert_augmented(node, &root->rb_root, augment);
 }
 
+/**
+ * rb_add_augmented_cached() - insert @node into the leftmost cached tree @tree
+ * @node: node to insert
+ * @tree: leftmost cached tree to insert @node into
+ * @less: operator defining the (partial) node order
+ * @augment: augmented rbtree callbacks
+ */
+static __always_inline void
+rb_add_augmented_cached(struct rb_node *node, struct rb_root_cached *tree,
+			bool (*less)(struct rb_node *, const struct rb_node *),
+			const struct rb_augment_callbacks *augment)
+{
+	struct rb_node **link = &tree->rb_root.rb_node;
+	struct rb_node *parent = NULL;
+	bool leftmost = true;
+
+	while (*link) {
+		parent = *link;
+		if (less(node, parent)) {
+			link = &parent->rb_left;
+		} else {
+			link = &parent->rb_right;
+			leftmost = false;
+		}
+	}
+
+	rb_link_node(node, parent, link);
+	augment->propagate(parent, NULL); /* suboptimal */
+	rb_insert_augmented_cached(node, tree, leftmost, augment);
+}
+
 /*
  * Template for declaring augmented rbtree callbacks (generic case)
  *
