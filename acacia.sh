@@ -2,7 +2,7 @@
 
 # --- Configuration ---
 KERNEL_ROOT=$(pwd)
-KERNEL_NAME="Sultan-KernelSU-SUSFS"
+KERNEL_NAME="Maximum-KernelSU-SUSFS"
 DEVICE="gs201"
 DATE=$(date +"%Y%m%d")
 LOG_FILE="$KERNEL_ROOT/build.log"
@@ -166,8 +166,23 @@ if [ ! -d "$ANYKERNEL_DIR" ]; then
     exit 1
 fi
 
+# Check if Image is freshly built (within last 5 minutes)
+IMAGE_FILE="$KERNEL_ROOT/arch/arm64/boot/Image.lz4"
+[ ! -f "$IMAGE_FILE" ] && IMAGE_FILE="$KERNEL_ROOT/arch/arm64/boot/Image"
+
+if [ -f "$IMAGE_FILE" ]; then
+    IMAGE_AGE=$(( $(date +%s) - $(stat -c %Y "$IMAGE_FILE") ))
+    if [ $IMAGE_AGE -gt 600 ]; then
+        echo "Error: Image is stale (${IMAGE_AGE}s old). Build may have failed."
+        exit 1
+    fi
+else
+    echo "Error: No kernel image found!"
+    exit 1
+fi
+
 cd "$ANYKERNEL_DIR"
-git clean -fdx 2>/dev/null || rm -f Image* dtb *.zip
+rm -f Image* dtb *.zip 2>/dev/null
 
 # Copy kernel image
 if [ -f "$KERNEL_ROOT/arch/arm64/boot/Image.lz4" ]; then
@@ -185,7 +200,7 @@ fi
 SHORT_SHA=$(git -C "$KERNEL_ROOT" rev-parse --short HEAD)
 ZIP_NAME="Acacia-${KERNEL_NAME}-${DEVICE}-${SHORT_SHA}-${DATE}.zip"
 
-zip -r9 "$ZIP_NAME" * -x .git README.md *placeholder
+zip -r9 "$ZIP_NAME" . -x ".git" -x "README.md" -x "*placeholder" -x "*.zip"
 mv "$ZIP_NAME" "$KERNEL_ROOT/"
 cd "$KERNEL_ROOT"
 
