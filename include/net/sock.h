@@ -2992,8 +2992,9 @@ void sk_get_meminfo(const struct sock *sk, u32 *meminfo);
  * determination of these values, since that is non-constant across
  * platforms.  This makes socket queueing behavior and performance
  * not depend upon such differences.
+ * Acacia: Increased for better mobile network throughput
  */
-#define _SK_MEM_PACKETS		512
+#define _SK_MEM_PACKETS		1024
 #define _SK_MEM_OVERHEAD	SKB_TRUESIZE(256)
 #define SK_WMEM_MAX		(_SK_MEM_OVERHEAD * _SK_MEM_PACKETS)
 #define SK_RMEM_MAX		(_SK_MEM_OVERHEAD * _SK_MEM_PACKETS)
