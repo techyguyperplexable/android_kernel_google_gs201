@@ -1090,11 +1090,11 @@ static void update_curr_rt(struct rq *rq)
 			raw_spin_lock(&rt_rq->rt_runtime_lock);
 			rt_rq->rt_time += delta_exec;
 			exceeded = sched_rt_runtime_exceeded(rt_rq);
-			if (exceeded)
-				resched_curr(rq);
 			raw_spin_unlock(&rt_rq->rt_runtime_lock);
-			if (exceeded)
+			if (exceeded) {
+				resched_curr(rq);
 				do_start_rt_bandwidth(sched_rt_bandwidth(rt_rq));
+			}
 		}
 	}
 }
