@@ -39,8 +39,8 @@
 #endif
 #define PBHA_BIT_MASK (0xf)
 
-#define PARTITION_DISABLE_HYSTERESIS (msecs_to_jiffies(100))
-#define PARTITION_ENABLE_THRESHOLD   (7)
+#define PARTITION_DISABLE_HYSTERESIS (msecs_to_jiffies(50))
+#define PARTITION_ENABLE_THRESHOLD   (5)
 
 
 /**
