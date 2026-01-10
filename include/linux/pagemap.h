@@ -1226,7 +1226,7 @@ struct readahead_control {
 	}
 
 /* Increased from 128K to 256K for better sequential read performance */
-#define VM_READAHEAD_PAGES	(SZ_256K / PAGE_SIZE)
+#define VM_READAHEAD_PAGES	(SZ_512K / PAGE_SIZE)
 
 void page_cache_ra_unbounded(struct readahead_control *,
 		unsigned long nr_to_read, unsigned long lookahead_count);
