@@ -197,7 +197,7 @@ struct scan_control {
  * From 0 .. 200.  Higher means more swappy.
  * Reduced to 100 for better interactive performance on mobile devices.
  */
-int vm_swappiness = 100;
+int vm_swappiness = 60;
 
 static void set_task_reclaim_state(struct task_struct *task,
 				   struct reclaim_state *rs)
