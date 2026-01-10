@@ -6379,19 +6379,9 @@ enqueue_task_fair(struct rq *rq, struct task_struct *p, int flags)
 	int task_new = !(flags & ENQUEUE_WAKEUP);
 	int should_iowait_boost;
 
-	/*
-	 * The code below (indirectly) updates schedutil which looks at
-	 * the cfs_rq utilization to select a frequency.
-	 * Let's add the task's estimated utilization to the cfs_rq's
-	 * estimated utilization, before we update schedutil.
-	 */
+	prefetch(&rq->cfs);
 	util_est_enqueue(&rq->cfs, p);
 
-	/*
-	 * If in_iowait is set, the code below may not trigger any cpufreq
-	 * utilization updates, so do it here explicitly with the IOWAIT flag
-	 * passed.
-	 */
 	should_iowait_boost = p->in_iowait;
 	trace_android_rvh_set_iowait(p, rq, &should_iowait_boost);
 	if (should_iowait_boost)
