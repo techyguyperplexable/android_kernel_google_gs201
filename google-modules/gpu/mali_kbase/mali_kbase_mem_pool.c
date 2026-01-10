@@ -202,6 +202,7 @@ static struct page *kbase_mem_pool_remove_locked(struct kbase_mem_pool *pool,
 						 enum kbase_page_status status)
 {
 	struct page *p;
+	struct page *next_p;
 
 	lockdep_assert_held(&pool->pool_lock);
 
@@ -209,6 +210,12 @@ static struct page *kbase_mem_pool_remove_locked(struct kbase_mem_pool *pool,
 		return NULL;
 
 	p = list_first_entry(&pool->page_list, struct page, lru);
+
+	/* Prefetch next page to reduce cache miss latency in bulk operations */
+	if (pool->cur_size > 1) {
+		next_p = list_next_entry(p, lru);
+		prefetch(next_p);
+	}
 
 	if (!pool->order && kbase_is_page_migration_enabled()) {
 		struct kbase_page_metadata *page_md = kbase_page_private(p);
