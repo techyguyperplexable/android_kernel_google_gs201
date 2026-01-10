@@ -75,9 +75,9 @@ EXPORT_TRACEPOINT_SYMBOL_GPL(sched_stat_runtime);
  * (default: 6ms * (1 + ilog(ncpus)), units: nanoseconds)
  * Reduced to 4ms for improved responsiveness on mobile devices.
  */
-unsigned int sysctl_sched_latency			= 4000000ULL;
+unsigned int sysctl_sched_latency			= 3000000ULL;
 EXPORT_SYMBOL_GPL(sysctl_sched_latency);
-static unsigned int __maybe_unused normalized_sysctl_sched_latency	= 4000000ULL;
+static unsigned int __maybe_unused normalized_sysctl_sched_latency	= 3000000ULL;
 
 /*
  * The initial- and re-scaling of tunables is configurable
@@ -98,16 +98,16 @@ unsigned int sysctl_sched_tunable_scaling = SCHED_TUNABLESCALING_LOG;
  * (default: 0.75 msec * (1 + ilog(ncpus)), units: nanoseconds)
  * Reduced to 0.5ms for smoother task preemption.
  */
-unsigned int sysctl_sched_min_granularity			= 500000ULL;
+unsigned int sysctl_sched_min_granularity			= 400000ULL;
 EXPORT_SYMBOL_GPL(sysctl_sched_min_granularity);
-static unsigned int normalized_sysctl_sched_min_granularity	= 500000ULL;
+static unsigned int normalized_sysctl_sched_min_granularity	= 400000ULL;
 
 /*
  * EEVDF task slices (the base timeslice value).
  * (default: 3ms, units: nanoseconds)
  */
-unsigned int sysctl_sched_base_slice			= 3000000ULL;
-static unsigned int __maybe_unused normalized_sysctl_sched_base_slice	= 3000000ULL;
+unsigned int sysctl_sched_base_slice			= 2000000ULL;
+static unsigned int __maybe_unused normalized_sysctl_sched_base_slice	= 2000000ULL;
 
 /*
  * Minimal preemption granularity for CPU-bound SCHED_IDLE tasks.
@@ -116,7 +116,7 @@ static unsigned int __maybe_unused normalized_sysctl_sched_base_slice	= 3000000U
  * (default: 0.75 msec)
  * Reduced to 0.5ms for consistency with min_granularity.
  */
-unsigned int sysctl_sched_idle_min_granularity			= 500000ULL;
+unsigned int sysctl_sched_idle_min_granularity			= 400000ULL;
 EXPORT_SYMBOL_GPL(sysctl_sched_idle_min_granularity);
 
 /*
@@ -141,9 +141,9 @@ unsigned int sysctl_sched_child_runs_first __read_mostly = 1;
  * (default: 1 msec * (1 + ilog(ncpus)), units: nanoseconds)
  * Reduced to 0.5ms for faster wakeup response.
  */
-unsigned int sysctl_sched_wakeup_granularity			= 500000UL;
+unsigned int sysctl_sched_wakeup_granularity			= 400000UL;
 EXPORT_SYMBOL_GPL(sysctl_sched_wakeup_granularity);
-static unsigned int __maybe_unused normalized_sysctl_sched_wakeup_granularity	= 500000UL;
+static unsigned int __maybe_unused normalized_sysctl_sched_wakeup_granularity	= 400000UL;
 
 const_debug unsigned int sysctl_sched_migration_cost	= 0UL;
 
