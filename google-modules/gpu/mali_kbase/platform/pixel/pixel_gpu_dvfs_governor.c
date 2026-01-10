@@ -37,12 +37,15 @@ static int gpu_dvfs_governor_basic(struct kbase_device *kbdev,
 
 	lockdep_assert_held(&pc->dvfs.lock);
 
-	if ((level > level_max) && (util > tbl[level].util_max)) {
-		/* Need to clock up*/
-		level--;
+	if (unlikely((level > level_max) && (util > tbl[level].util_max))) {
+		/* Need to clock up - use aggressive step for high utilization */
+		if (util > 90 && level >= 2)
+			level -= 2;
+		else
+			level--;
 
-		/* Reset hysteresis */
-		pc->dvfs.governor.delay = tbl[level].hysteresis;
+		/* Use reduced hysteresis for faster response */
+		pc->dvfs.governor.delay = tbl[level].hysteresis >> 1;
 
 	} else if ((level < level_min) && (util < tbl[level].util_min)) {
 		/* We are clocked too high */
