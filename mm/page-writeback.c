@@ -72,7 +72,7 @@ static long ratelimit_pages = 32;
  * Start background writeback (via writeback threads) at this percentage
  * Increased to 20 to reduce background I/O impact on interactive performance.
  */
-static int dirty_background_ratio = 20;
+static int dirty_background_ratio = 10;
 
 /*
  * dirty_background_bytes starts at 0 (disabled) so that it is a function of
@@ -90,7 +90,7 @@ static int vm_highmem_is_dirtyable;
  * The generator of dirty data starts writeback at this percentage
  * Increased to 30 to batch more writes and improve throughput.
  */
-static int vm_dirty_ratio = 30;
+static int vm_dirty_ratio = 20;
 
 /*
  * vm_dirty_bytes starts at 0 (disabled) so that it is a function of
